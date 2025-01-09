@@ -10,7 +10,7 @@ struct Handler;
 #[serenity::async_trait]
 impl EventHandler for Handler {
   async fn message(&self, context: Context, msg: Message) {
-    if msg.content == "0w0 ping" {
+    if msg.content.contains("0w0 ping") {
       let channel = match msg.channel_id.to_channel(&context).await {
         Ok(channel) => channel,
         Err(why) => {
@@ -21,14 +21,37 @@ impl EventHandler for Handler {
 
       let response = MessageBuilder::new()
         .push("User ")
-        .push_bold_safe(&msg.author.name)
+        .mention(&msg.author)
         .push(" used the 'ping' command in the ")
         .mention(&channel)
         .push(" channel")
         .build();
 
+      
       if let Err(why) = msg.channel_id.say(&context.http, &response).await {
         println!("Error sending message: {why:?}");
+      }
+      if let Err(why) = msg.reply(&context.http, &response).await {
+        println!("Error sending message: {why:?}");
+      }
+    }
+    match msg.mentions_me(&context.http).await {
+      Ok(true) => {
+        let response = MessageBuilder::new()
+        .push("Hello ")
+        .mention(&msg.author)
+        .push(", wazzup??")
+        .build();
+        
+        if let Err(why) = msg.reply(&context.http, &response).await {
+          println!("Error sending message: {why:?}");
+        }
+      },
+      Ok(false) => {
+          // No need to do anything if the bot wasn't mentioned.
+      }
+      Err(why) => {
+          println!("Error checking mentions: {:?}", why);
       }
     }
   }
