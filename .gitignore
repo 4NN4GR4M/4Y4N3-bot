@@ -1,0 +1,13 @@
+AYANE/target/
+
+AYANE/*.exe
+AYANE/*.dll
+AYANE/*.so
+AYANE/*.dylib
+
+.cache
+.DS_Store
+
+.idea/
+.vscode/
+*.rs.bk
