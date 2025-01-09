@@ -1,23 +1,40 @@
 use std::env;
 
-use serenity::model::prelude::*;
+use serenity::model::channel::Message;
+use serenity::model::gateway::Ready;
 use serenity::prelude::*;
-use serenity::Client;
+use serenity::utils::MessageBuilder;
 
 struct Handler;
 
 #[serenity::async_trait]
 impl EventHandler for Handler {
   async fn message(&self, context: Context, msg: Message) {
-    if msg.content == "!ping" {
-      if let Err(why) = msg.channel_id.say(&context.http, "Pong! :3").await {
-        println!("Error sending message: {:?}", why);
+    if msg.content == "0w0 ping" {
+      let channel = match msg.channel_id.to_channel(&context).await {
+        Ok(channel) => channel,
+        Err(why) => {
+          println!("Error getting channel: {why:?}");
+          return;
+        },
+      };
+
+      let response = MessageBuilder::new()
+        .push("User ")
+        .push_bold_safe(&msg.author.name)
+        .push(" used the 'ping' command in the ")
+        .mention(&channel)
+        .push(" channel")
+        .build();
+
+      if let Err(why) = msg.channel_id.say(&context.http, &response).await {
+        println!("Error sending message: {why:?}");
       }
     }
   }
 
   async fn ready(&self, _: Context, ready: Ready) {
-    println!("{} is connected!", ready.user.name);
+    println!("{}, all systems go!", ready.user.name);
   }
 }
 
@@ -26,7 +43,9 @@ async fn main() {
   let token = env::var("DISCORD_TOKEN").expect("Expected a token.");
 
   let intents: GatewayIntents = 
-    GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT;
+    GatewayIntents::GUILD_MESSAGES 
+    | GatewayIntents::MESSAGE_CONTENT
+    | GatewayIntents::DIRECT_MESSAGES;
 
   let mut client =
   Client::builder(token, intents).event_handler(Handler).await.expect("Err creating client");
