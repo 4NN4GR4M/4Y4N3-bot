@@ -2,8 +2,10 @@ use std::env;
 
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
+use serenity::model::guild;
+use serenity::model::prelude::Reaction;
 use serenity::prelude::*;
-use serenity::utils::MessageBuilder;
+use serenity::utils::{MessageBuilder, Role};
 
 struct Handler;
 
@@ -56,6 +58,27 @@ impl EventHandler for Handler {
     }
   }
 
+  async fn reaction_add(&self, context: Context, reaction: Reaction) {
+    println!("{:?}", reaction.emoji.to_string());
+    if reaction.emoji.to_string() == "1️⃣" {
+      let reaction_user = match reaction.user(&context.http).await {
+        Ok(reaction_user) => reaction_user,
+        Err(why) => {
+          println!("Error getting user. {why:?}");
+          return;
+        },
+      };
+      let response = MessageBuilder::new()
+      .mention(&reaction_user)
+      .build();
+      if let Err(why) = reaction.channel_id.say(&context.http, &response).await {
+        println!("Error sending reaction response: {why:?}");
+      }
+      let guild = reaction.guild_id;
+      guild.members(&context.http, reaction_user.id).await;
+    }
+  }
+
   async fn ready(&self, _: Context, ready: Ready) {
     println!("{}, all systems go!", ready.user.name);
   }
@@ -68,7 +91,8 @@ async fn main() {
   let intents: GatewayIntents = 
     GatewayIntents::GUILD_MESSAGES 
     | GatewayIntents::MESSAGE_CONTENT
-    | GatewayIntents::DIRECT_MESSAGES;
+    | GatewayIntents::DIRECT_MESSAGES
+    | GatewayIntents::GUILD_MESSAGE_REACTIONS;
 
   let mut client =
   Client::builder(token, intents).event_handler(Handler).await.expect("Err creating client");
