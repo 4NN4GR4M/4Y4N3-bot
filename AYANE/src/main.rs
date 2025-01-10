@@ -106,8 +106,7 @@ async fn main() {
     | GatewayIntents::MESSAGE_CONTENT
     | GatewayIntents::DIRECT_MESSAGES
     | GatewayIntents::GUILD_MESSAGE_REACTIONS
-    | GatewayIntents::GUILD_MEMBERS
-    | GatewayIntents::GUILD;
+    | GatewayIntents::GUILD_MEMBERS;
 
   let mut client =
   Client::builder(token, intents).event_handler(Handler).await.expect("Err creating client");
