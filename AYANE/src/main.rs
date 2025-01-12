@@ -39,9 +39,6 @@ impl EventHandler for Handler {
         .build();
 
       
-      if let Err(why) = msg.channel_id.say(&context.http, &response).await {
-        println!("Error sending message: {why:?}");
-      }
       if let Err(why) = msg.reply(&context.http, &response).await {
         println!("Error sending message: {why:?}");
       }
@@ -49,6 +46,7 @@ impl EventHandler for Handler {
     match msg.mentions_me(&context.http).await {
       Ok(true) => {
         // Must check if the user sending the message has the "admin" role.
+        // Make a command parser to ensure commands are properly executed and in the correct order.
         if msg.content.contains("vibe-check") {
           let response = MessageBuilder::new()
           .push("VIBE CHECK :3")
@@ -64,8 +62,10 @@ impl EventHandler for Handler {
         if msg_breakdown[1] == "pat" {
           if msg.mentions.len() > 0 {
             let users_mentioned = msg.mentions;
+            let user_no = users_mentioned.len();
+            println!("{:?}", users_mentioned);
             for user in users_mentioned {
-              if user.name == "AYANE" {
+              if user.name == "AYANE" && user_no > 1 {
                 continue;
               }
               let response = MessageBuilder::new()
