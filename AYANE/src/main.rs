@@ -1,3 +1,4 @@
+use core::panic;
 use std::collections::HashMap;
 use std::env;
 
@@ -21,15 +22,26 @@ struct Utilities {
 #[serenity::async_trait]
 impl EventHandler for Handler {
   async fn message(&self, context: Context, msg: Message) {
-    if msg.content.contains("0w0 ping") {
-      let channel = match msg.channel_id.to_channel(&context).await {
-        Ok(channel) => channel,
-        Err(why) => {
-          println!("Error getting channel: {why:?}");
-          return;
-        },
-      };
+    let mut msg_breakdown= msg.content.split_whitespace().next();
+    println!("{:?}", msg_breakdown);
+    match msg_breakdown {
+      Some("->") => { }
+      None => {
+        return;
+      }
+      _ => {
+        return;
+      }
+    }
 
+    if msg.content.contains("ping") {
+      let channel = match msg.channel_id.to_channel(&context.http).await {
+        Ok(channel) => channel,
+        Err(err) => {
+          eprintln!("channel could not be retrieved. {:?}", err);
+          return;
+        }
+      };
       let response = MessageBuilder::new()
         .push("User ")
         .mention(&msg.author)
@@ -38,62 +50,49 @@ impl EventHandler for Handler {
         .push(" channel")
         .build();
 
-      
       if let Err(why) = msg.reply(&context.http, &response).await {
         println!("Error sending message: {why:?}");
       }
     }
-    match msg.mentions_me(&context.http).await {
-      Ok(true) => {
-        // Must check if the user sending the message has the "admin" role.
-        // Make a command parser to ensure commands are properly executed and in the correct order.
-        if msg.content.contains("vibe-check") {
-          let response = MessageBuilder::new()
-          .push("VIBE CHECK :3")
-          .push("\n*Drops grenade in an orphanage*")
-          .build();
-          
-          if let Err(why) = msg.channel_id.say(&context.http, &response).await {
-            println!("Error sending vibe check. {why:?}");
-          }
-        }
 
-        let mut msg_breakdown: Vec<&str> = msg.content.split_whitespace().collect();
-        if msg_breakdown[1] == "pat" {
-          if msg.mentions.len() > 0 {
-            let users_mentioned = msg.mentions;
-            let user_no = users_mentioned.len();
-            println!("{:?}", users_mentioned);
-            for user in users_mentioned {
-              if user.name == "AYANE" && user_no > 1 {
-                continue;
-              }
-              let response = MessageBuilder::new()
-              .push("*Pats ")
-              .mention(&user)
-              .push(" aggressively.*")
-              .build();
+    // Must check if the user sending the message has the "admin" role.
+    // Make a command parser to ensure commands are properly executed and in the correct order.
+    if msg.content.contains("vibe-check") {
+      let response = MessageBuilder::new()
+      .push("VIBE CHECK :3")
+      .push("\n*Drops grenade in an orphanage*")
+      .build();
+      
+      if let Err(why) = msg.channel_id.say(&context.http, &response).await {
+        println!("Error sending vibe check. {why:?}");
+      }
+    }
 
-              msg.channel_id.say(&context.http, &response).await;
-            }
-          }
-        }
-        if msg.content.contains("generate-role-menu") {
-          // Here, we will map in a hashmap, the codes of each reaction emoji in the message, to their corresponding role. 
-          // Once the bot prints the role selection menu, it will take it's message id and store it in a hashmap that indicate role selection menus.
-          // The .reactionAdd async function is going to check if the reaction was done to a role selection menu message, in the correct channel.
-          // If it was, then it will extract the reaction emoji code, and look it up in the emoji: role hashmap to gain the correct role id.
-          // Then it will assign the user that added the reaction, that role.
-          let mut msg_breakdown: Vec<&str> = msg.content.split_whitespace().collect();
-          println!("{:?}", msg_breakdown);
-        }
-      },
-      Ok(false) => {
-          // No need to do anything if the bot wasn't mentioned.
+    if msg.content.contains("pat") {
+      if let true = msg.mentions.len() == 0 {
+        return;
       }
-      Err(why) => {
-          println!("Error checking mentions: {:?}", why);
+      let users_mentioned = msg.mentions;
+      let user_no = users_mentioned.len();
+      println!("{:?}", users_mentioned);
+      for user in users_mentioned {
+        let response = MessageBuilder::new()
+        .push("*Pats ")
+        .mention(&user)
+        .push(" aggressively.*")
+        .build();
+
+        msg.channel_id.say(&context.http, &response).await;
       }
+    }
+    if msg.content.contains("generate-role-menu") {
+      // Here, we will map in a hashmap, the codes of each reaction emoji in the message, to their corresponding role. 
+      // Once the bot prints the role selection menu, it will take it's message id and store it in a hashmap that indicate role selection menus.
+      // The .reactionAdd async function is going to check if the reaction was done to a role selection menu message, in the correct channel.
+      // If it was, then it will extract the reaction emoji code, and look it up in the emoji: role hashmap to gain the correct role id.
+      // Then it will assign the user that added the reaction, that role.
+      let mut msg_breakdown: Vec<&str> = msg.content.split_whitespace().collect();
+      println!("{:?}", msg_breakdown);
     }
   }
 
