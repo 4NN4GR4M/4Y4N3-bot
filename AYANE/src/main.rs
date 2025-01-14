@@ -23,7 +23,6 @@ struct Utilities {
 impl EventHandler for Handler {
   async fn message(&self, context: Context, msg: Message) {
     let mut msg_breakdown= msg.content.split_whitespace().next();
-    println!("{:?}", msg_breakdown);
     match msg_breakdown {
       Some("->") => { }
       None => {
